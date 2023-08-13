@@ -1,7 +1,7 @@
 import { Controller, Delete, Get, Param, Post, Put, Body } from "@nestjs/common/decorators";
-import { DataInterface, ReportType, mydata } from "./mydata";
-import { ReportDto } from "./report.dto";
-import {v4 as uuid} from "uuid";
+import { ReportType, mydata } from "./mydata";
+import { ReportDto, updateReportDTO } from "./report.dto";
+import { v4 as uuid } from "uuid";
 @Controller("report/:type")
 export class AppController {
 
@@ -27,30 +27,51 @@ export class AppController {
   }
 
   @Post()
-  createReport(@Body() body: ReportDto,@Param("type") type:ReportType.INCOME | ReportType.EXPENSE) {
-    const reportType=type=="income"?ReportType.INCOME:ReportType.EXPENSE;
+  createReport(@Body() body: ReportDto, @Param("type") type: ReportType.INCOME | ReportType.EXPENSE) {
+    const reportType = type == "income" ? ReportType.INCOME : ReportType.EXPENSE;
 
-    const newReport={
-      amount:body.amount,
-      source:body.source,
-      id:uuid(),
+    const newReport = {
+      amount: body.amount,
+      source: body.source,
+      id: uuid(),
       type: reportType,
-      created_at:new Date(),
-      updated_at:new Date()
+      created_at: new Date(),
+      updated_at: new Date()
     }
 
     mydata.report.push(newReport)
-    
+
     return newReport
   }
 
   @Put(":id")
-  updateReport() {
-    return "updated"
+  updateReport(@Param("id") id: string, @Body() body: updateReportDTO, @Param("type") type: ReportType.INCOME | ReportType.EXPENSE) {
+    let data = mydata.report.find(element => element.id == id);
+
+    if (!data || data.type !== type) {
+      return "No Data Found"
+    }
+
+    data = { ...data, ...body, updated_at: new Date() }
+
+    for (let i = 0; i < mydata.report.length; i++) {
+      if (mydata.report[i].id === id) {
+        mydata.report[i] = data
+        break;
+      }
+    }
+
+    return mydata
   }
 
   @Delete(":id")
-  deleteReport() {
-    return "deleted"
+  deleteReport(@Param("id") id: string) {
+    const index = mydata.report.findIndex(element => element.id === id);
+
+    if (index === -1)
+      return "Not Found";
+
+    mydata.report.splice(index, 1);
+    return mydata;
   }
 }
