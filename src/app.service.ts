@@ -1,33 +1,37 @@
 import { ReportType, mydata } from './mydata';
 import { v4 as uuid } from 'uuid';
-
+import { ResponseReportDTO } from './report.dto';
+import { NotFoundException } from '@nestjs/common/exceptions';
 interface Report {
   amount: number;
   source: string;
 }
+
+interface UpdateReport {
+  amount?: number;
+  source?: string;
+}
 export class AppService {
-  getAllReports(type: ReportType) {
-    if (type === ReportType.INCOME) {
-      return mydata.report.filter(
-        (element) => element.type == ReportType.INCOME,
-      );
-    }
-    if (type === ReportType.EXPENSE) {
-      return mydata.report.filter(
-        (element) => element.type == ReportType.EXPENSE,
-      );
-    }
+  getAllReports(type: ReportType): ResponseReportDTO[] {
+    return mydata.report
+      .filter((element) => element.type === type)
+      .map((report) => new ResponseReportDTO(report));
   }
 
-  getReportById(type: ReportType, id: string) {
-    return mydata.report.filter((element) => {
+  getReportById(type: ReportType, id: string): ResponseReportDTO {
+    const report=mydata.report.find((element) => {
       if (type == element.type && element.id === id) {
         return element;
       }
     });
+    if(!report) return;
+    return new ResponseReportDTO(report)
   }
 
-  createReport(type: ReportType, { amount, source }: Report) {
+  createReport(
+    type: ReportType,
+    { amount, source }: Report,
+  ): ResponseReportDTO {
     const newReport = {
       amount,
       source,
@@ -39,15 +43,17 @@ export class AppService {
 
     mydata.report.push(newReport);
 
-    return newReport;
+    return new ResponseReportDTO(newReport);
   }
 
-  updateReport(type: ReportType, id: string, body: Report) {
+  updateReport(
+    type: ReportType,
+    id: string,
+    body: UpdateReport,
+  ): ResponseReportDTO {
     let data = mydata.report.find((element) => element.id == id);
 
-    if (!data || data.type !== type) {
-      return 'No Data Found';
-    }
+    if (!data || data.type !== type) return;
 
     data = { ...data, ...body, updated_at: new Date() };
 
@@ -58,7 +64,7 @@ export class AppService {
       }
     }
 
-    return mydata;
+    return new ResponseReportDTO(data);
   }
 
   deleteReport(id: string) {
