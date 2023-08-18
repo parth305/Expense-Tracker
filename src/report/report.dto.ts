@@ -5,7 +5,7 @@ import {
   IsPositive,
   IsNotEmpty,
 } from 'class-validator';
-import { ReportType } from './mydata';
+import { ReportType } from '../mydata';
 import { Exclude, Expose } from 'class-transformer';
 
 export class ReportDto {
